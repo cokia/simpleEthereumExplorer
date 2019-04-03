@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>block view</title>
+
+<script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+
+
+<script>
+        var web3 = new Web3();
+        var provider = new web3.providers.HttpProvider("http://127.0.0.1:8545");
+        web3.setProvider(provider);
+
+
+         console.log("Version:" + web3.version.api);
+
+
+         web3.eth.defaultAccount = web3.eth.accounts[0];
+         console.log("accounts :" + web3.eth.defaultAccount);
+		
+	
+var stop = false;
+
+function startMonitor() {
+	 stop  = false;
+	 var startBlockNo = web3.eth.blockNumber - 20;  
+	 
+	 var table = document.getElementById('list');
+	 
+     var i = startBlockNo;
+	  for(; i < web3.eth.blockNumber; i++)
+	  {
+		  var result = web3.eth.getBlock(i);
+		  insertBlockRow(result, table, i);
+	  }
+
+	 setTimeout(function(){
+		 watchBlock(table, i);
+	 }, 10000);
+
+
+}
+
+function watchBlock(table, blockNumber) {
+     if(stop){
+		 return;
+	 }
+
+	 if(blockNumber == web3.eth.blockNumber){
+		setTimeout(function(){
+		 watchBlock(table, i);
+	   }, 10000);
+	 }
+
+
+	var result = web3.eth.getBlock(blockNumber);
+	insertBlockRow(result, table, blockNumber);
+	setTimeout(function(){
+		 watchBlock(table, ++blockNumber);
+	 }, 10000);
+}
+
+
+function insertBlockRow(result, table) {
+	var row = table.insertRow();
+	var td = row.insertCell(0);
+	td.innerHTML = result.number;
+	var td = row.insertCell(1);
+	td.innerHTML = new Date(parseInt(result.timestamp, 16) * 1000).toString();
+	var td = row.insertCell(2);
+	td.innerHTML = result.hash;
+	var td = row.insertCell(3);
+	td.innerHTML = result.nonce;
+	var td = row.insertCell(4);
+	if (result.transactions.length > 0) {
+	insertTranRow(result.transactions, td);
+	}
+}
+
+
+function insertTranRow(transactions, td) {
+	var allData = "";
+	for (var i = 0; i < transactions.length; i++) {
+		var data=web3.eth.getTransaction(transactions[i])
+		allData  += JSON.stringify(data);
+	}
+	td.innerHTML = "<input type='text' value='" + allData + "' /></td>";
+}
+
+function stopWatch() {
+	stop = true;
+}
+</script>
+</head>
+<body>
+	<br />
+	<input type="button" value="start" onclick="startMonitor();" />
+	<input type="button" value="stop" onclick="stopWatch();" />
+	<table id="list" border="1">
+		<tr>
+			<th>Block<br />Number</th>
+			<th>TimeStamp</th>
+			<th>BlockHash</th>
+			<th>Nonce</th>
+			<th>Transaction</th>
+		</tr>
+	</table>
+</body>
+</html>
